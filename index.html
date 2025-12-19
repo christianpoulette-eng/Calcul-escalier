@@ -1,0 +1,80 @@
+index.html
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Calcul escalier (po)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #f7f7f7;
+    }
+    h1 {
+      color: #1e4ed8;
+    }
+    .box {
+      background: white;
+      padding: 20px;
+      border-radius: 6px;
+      max-width: 700px;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input {
+      width: 100%;
+      padding: 6px;
+      margin-top: 4px;
+    }
+    button {
+      margin-top: 15px;
+      padding: 8px 15px;
+    }
+    pre {
+      background: #eee;
+      padding: 10px;
+      white-space: pre-wrap;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Calcul escalier (po)</h1>
+<p>Version web gratuite – calcul dans le navigateur</p>
+
+<div class="box">
+  <h3>Entrées</h3>
+
+  <label>Hauteur totale (po)</label>
+  <input id="h" type="number" value="96">
+
+  <label>Nombre de contremarches</label>
+  <input id="n" type="number" value="13">
+
+  <label>Giron (po)</label>
+  <input id="g" type="number" value="9">
+
+  <button onclick="calculer()">Calculer</button>
+
+  <h3>Résultats</h3>
+  <pre id="resultat">Prêt. Clique « Calculer ».</pre>
+</div>
+
+<script>
+function calculer() {
+  const h = parseFloat(document.getElementById("h").value);
+  const n = parseInt(document.getElementById("n").value);
+  const g = parseFloat(document.getElementById("g").value);
+
+  if (h <= 0 || n <= 0 || g <= 0) {
+    document.getElementById("resultat").textContent =
+      "⚠️ Valeurs invalides";
+    return;
+  }
+
+  const contremarche = h / n;
+  const marches = n - 1;
+  const recul = marches * g;
+  const angl
