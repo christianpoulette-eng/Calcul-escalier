@@ -1,4 +1,4 @@
-<!doctype html>
+doctype html>
 <html lang="fr">
 <head>
   <meta charset="utf-8" />
@@ -102,7 +102,47 @@ function exporterCSV(){
   a.download = `escalier_${Date.now()}.csv`;
   a.click();
   URL.revokeObjectURL(a.href);
+}// ===== Quart tournant – 3 marches balancées =====
+function calculerTournant() {
+  const R = parseFloat(document.getElementById("r_ext").value);
+  const W = parseFloat(document.getElementById("largeur").value);
+
+  const alpha = 0.523599; // 30° (π/6)
+  const ligneFoulee = 16; // ✅ ligne de foulée demandée
+
+  const out = document.getElementById("resultat_tournant");
+
+  if (!(R > 0) || !(W > 0)) {
+    out.textContent = "⚠️ Valeurs invalides";
+    return;
+  }
+
+  const rLF = R - (W - ligneFoulee);
+
+  let txt = "--- Quart tournant (3 marches) ---\n";
+  txt += `Rayon extérieur : ${R.toFixed(2)} po\n`;
+  txt += `Largeur escalier : ${W} po\n`;
+  txt += `Ligne de foulée : ${ligneFoulee} po\n\n`;
+
+  if (rLF <= 0) {
+    txt += "❌ Géométrie impossible (ligne de foulée hors zone)\n";
+    out.textContent = txt;
+    return;
+  }
+
+  const gironExt = R * alpha;
+  const gironLF  = rLF * alpha;
+
+  txt += `Giron extérieur : ${gironExt.toFixed(2)} po\n`;
+  txt += `Giron ligne de foulée : ${gironLF.toFixed(2)} po\n`;
+
+  txt += gironLF >= 8
+    ? "\n✅ Giron confortable à la ligne de foulée"
+    : "\n⚠️ Giron trop petit à la ligne de foulée";
+
+  out.textContent = txt;
 }
+
 
 function exporterPDF(){
   if(!last){ alert("Fais d’abord « Calculer »."); return; }
@@ -133,4 +173,3 @@ function exporterPDF(){
 </script>
 </body>
 </html>
-
