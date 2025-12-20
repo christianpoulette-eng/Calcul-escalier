@@ -1,80 +1,136 @@
-index.html
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Calcul escalier (po)</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 40px;
-      background: #f7f7f7;
-    }
-    h1 {
-      color: #1e4ed8;
-    }
-    .box {
-      background: white;
-      padding: 20px;
-      border-radius: 6px;
-      max-width: 700px;
-    }
-    label {
-      display: block;
-      margin-top: 10px;
-    }
-    input {
-      width: 100%;
-      padding: 6px;
-      margin-top: 4px;
-    }
-    button {
-      margin-top: 15px;
-      padding: 8px 15px;
-    }
-    pre {
-      background: #eee;
-      padding: 10px;
-      white-space: pre-wrap;
-    }
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial; margin:20px; max-width:820px}
+    .row{display:grid; grid-template-columns:220px 1fr; gap:10px; margin:10px 0}
+    input{padding:10px; font-size:16px}
+    button{padding:10px 14px; font-size:16px; cursor:pointer; margin-right:8px}
+    .card{border:1px solid #ddd; border-radius:10px; padding:14px; margin-top:14px}
+    .ok{color:#0a7a2f;font-weight:700}
+    .warn{color:#b45309;font-weight:700}
+    pre{white-space:pre-wrap; margin:0}
+    small{color:#666}
   </style>
 </head>
 <body>
+  <h1>Calcul escalier (po)</h1>
+  <small>Version web gratuite – calcul dans le navigateur</small>
 
-<h1>Calcul escalier (po)</h1>
-<p>Version web gratuite – calcul dans le navigateur</p>
+  <div class="card">
+    <h3>Entrées</h3>
+    <div class="row"><label>Hauteur totale (po)</label><input id="h" type="number" step="0.001" value="108"></div>
+    <div class="row"><label>Nombre de contremarches</label><input id="n" type="number" step="1" value="15"></div>
+    <div class="row"><label>Giron (po)</label><input id="g" type="number" step="0.001" value="10"></div>
 
-<div class="box">
-  <h3>Entrées</h3>
+    <button onclick="calculer()">Calculer</button>
+    <button onclick="exporterCSV()">Exporter Excel (CSV)</button>
+    <button onclick="exporterPDF()">Exporter PDF</button>
+  </div>
 
-  <label>Hauteur totale (po)</label>
-  <input id="h" type="number" value="96">
-
-  <label>Nombre de contremarches</label>
-  <input id="n" type="number" value="13">
-
-  <label>Giron (po)</label>
-  <input id="g" type="number" value="9">
-
-  <button onclick="calculer()">Calculer</button>
-
-  <h3>Résultats</h3>
-  <pre id="resultat">Prêt. Clique « Calculer ».</pre>
-</div>
+  <div class="card">
+    <h3>Résultats</h3>
+    <pre id="out">Prêt. Clique « Calculer ».</pre>
+  </div>
 
 <script>
-function calculer() {
-  const h = parseFloat(document.getElementById("h").value);
-  const n = parseInt(document.getElementById("n").value);
-  const g = parseFloat(document.getElementById("g").value);
+let last = null;
 
-  if (h <= 0 || n <= 0 || g <= 0) {
-    document.getElementById("resultat").textContent =
-      "⚠️ Valeurs invalides";
-    return;
-  }
-
+function calcEscalier(h, n, g){
+  if (!(h>0 && n>0 && g>0)) throw new Error("Tout doit être > 0 (hauteur, contremarches, giron).");
   const contremarche = h / n;
-  const marches = n - 1;
-  const recul = marches * g;
-  const angl
+  const nb_marches = n - 1;
+  const reculement = nb_marches * g;
+  if (nb_marches <= 0 || reculement <= 0) throw new Error("Entrée invalide : contremarches ≥ 2 et giron > 0.");
+
+  const angle_deg = Math.atan(h / reculement) * 180 / Math.PI;
+  const limon = Math.sqrt(h*h + reculement*reculement);
+  const conforme = (contremarche >= 6.5 && contremarche <= 7.75);
+
+  return {h,n,g, contremarche, nb_marches, reculement, angle_deg, limon, conforme, ts: new Date().toLocaleString("fr-CA")};
+}
+
+function calculer(){
+  try{
+    const h = parseFloat(document.getElementById("h").value);
+    const n = parseInt(document.getElementById("n").value, 10);
+    const g = parseFloat(document.getElementById("g").value);
+
+    last = calcEscalier(h,n,g);
+
+    const r = last;
+    const lines = [
+      "--- Résultats ---",
+      `Contremarche réelle : ${r.contremarche.toFixed(3)} po`,
+      `Nombre de marches : ${r.nb_marches}`,
+      `Reculement total : ${r.reculement.toFixed(3)} po`,
+      `Pente (angle) : ${r.angle_deg.toFixed(2)} degrés`,
+      `Longueur limon : ${r.limon.toFixed(3)} po`,
+      r.conforme ? "✅ Contremarche dans la plage" : "⚠️ Contremarche hors plage (6.5 à 7.75 po)"
+    ];
+    document.getElementById("out").textContent = lines.join("\n");
+  }catch(e){
+    document.getElementById("out").textContent = "Erreur : " + e.message;
+  }
+}
+
+function exporterCSV(){
+  if(!last){ alert("Fais d’abord « Calculer »."); return; }
+  const r = last;
+
+  const rows = [
+    ["Champ","Valeur"],
+    ["Date/heure", r.ts],
+    ["Hauteur totale (po)", r.h],
+    ["Nombre de contremarches", r.n],
+    ["Giron (po)", r.g],
+    ["Contremarche réelle (po)", r.contremarche.toFixed(3)],
+    ["Nombre de marches", r.nb_marches],
+    ["Reculement total (po)", r.reculement.toFixed(3)],
+    ["Pente (angle) (degrés)", r.angle_deg.toFixed(2)],
+    ["Longueur limon (po)", r.limon.toFixed(3)],
+    ["Contrôle contremarche", r.conforme ? "OK" : "Hors plage"]
+  ];
+
+  const csv = rows.map(row => row.map(v => `"${String(v).replaceAll('"','""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `escalier_${Date.now()}.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+function exporterPDF(){
+  if(!last){ alert("Fais d’abord « Calculer »."); return; }
+  const r = last;
+
+  const w = window.open("", "_blank");
+  w.document.write(`
+    <html><head><meta charset="utf-8"><title>PDF Escalier</title>
+    <style>body{font-family:Arial; padding:24px}</style>
+    </head><body>
+      <h1>Calcul escalier – Résultats</h1>
+      <p>Date/heure : ${r.ts}</p>
+      <p>Hauteur : ${r.h} po</p>
+      <p>Contremarches : ${r.n}</p>
+      <p>Giron : ${r.g} po</p>
+      <hr/>
+      <p>Contremarche réelle : ${r.contremarche.toFixed(3)} po</p>
+      <p>Nombre de marches : ${r.nb_marches}</p>
+      <p>Reculement total : ${r.reculement.toFixed(3)} po</p>
+      <p>Pente : ${r.angle_deg.toFixed(2)}°</p>
+      <p>Longueur limon : ${r.limon.toFixed(3)} po</p>
+      <p>Contrôle : ${r.conforme ? "OK ✅" : "Hors plage ⚠️"}</p>
+      <script>window.print()<\/script>
+    </body></html>
+  `);
+  w.document.close();
+}
+</script>
+</body>
+</html>
+
